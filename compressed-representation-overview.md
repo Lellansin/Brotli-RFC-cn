@@ -32,9 +32,9 @@ literal, literal, ..., literal, copy, copy, ..., copy
 
 如果 meta-block 未压缩的总长度已经满了（到了 meta-block 长度的上限），则 meta-block 中的最后一个命令可以以最后的字面序列为结尾。 在这种情况下，最后一个命令中没有距离，并且复制长度会被忽略。
 
-每个种类（category）可以有多个前缀码，其中种类中下一个元素所使用的前缀码，取决于先于那个元素之前的压缩流的上下文。 其中上下文是由三个当前块类型组成，不过每个种类只有一个类型。 块类型的范围是 `0..255` 。 对于每个种类，都有一个计数，统计该种类维持了多少个使用当前块类型进行解码的元素。 一旦该计数被消耗，再处理该类别的下一个元素之前，一个新的块类型和块计数会从马上从流中读取出来，并使用这个新的块类型。
+每个种类（category）可以有多个前缀码，其中种类中下一个元素所使用的前缀码，取决于先于那个元素之前的压缩流的上下文。 其中上下文是由三个当前 block 类型组成，不过每个种类只有一个类型。 block 类型的范围是 `0..255` 。 对于每个种类，都有一个计数，统计该种类维持了多少个使用当前 block 类型进行解码的元素。 一旦该计数被消耗，再处理该类别的下一个元素之前，一个新的 block 类型和 block 计数会从马上从流中读取出来，并使用这个新的 block 类型。
 
-`插入-复制`块类型直接确定在下一个`插入-复制长度`中使用哪个前缀码。 对于字面序列和距离元素，相应的块类型用于与其他上下文信息结合，以确定下一个元素用哪个前缀码。
+`插入-复制` block 类型直接确定在下一个`插入-复制长度`中使用哪个前缀码。 对于字面序列和距离元素，相应的块类型用于与其他上下文信息结合，以确定下一个元素用哪个前缀码。
 
 考虑如下的例子：
 
@@ -42,24 +42,26 @@ literal, literal, ..., literal, copy, copy, ..., copy
    (IaC0, L0, L1, L2, D0)(IaC1, D1)(IaC2, L3, L4, D2)(IaC3, L5, D3)
 ```
 
-这里的 meta-block 有四个命令，为了清楚起见用在括号括了起来，其中的三个种类的符号中的每一个都可以使用不同的块类型来解释。 接着，我们将每个种类分别按自己的序列分开，从而展示块类型分配到这些元素的示例。 每个方括号组都是一个使用相同块类型的块：
+注：`IaC -> insert-and-copy`, `L -> Literal`, `D -> distance`
+
+这里的 meta-block 有四个命令，为了清楚起见先括号括了起来，其中的三个种类的符号中的每一个都可以使用不同的 block 类型来解释。 那么，我们将他们按其自身的序列分开，从而展示 block 类型分配到这些元素的示例。 下面每个方括号组都是一个使用相同类型的 block：
 
 ```
-    [IaC0, IaC1][IaC2, IaC3]  <-- insert-and-copy: block types 0 and 1
+    [IaC0, IaC1][IaC2, IaC3]  <-- insert-and-copy: block 类型 0 and 1
 
-    [L0, L1][L2, L3, L4][L5]  <-- literals: block types 0, 1, and 0
+    [L0, L1][L2, L3, L4][L5]  <-- literals: block 类型 0, 1, and 0
 
-    [D0][D1, D2, D3]          <-- distances: block types 0 and 1
+    [D0][D1, D2, D3]          <-- distances: block 类型 0 and 1
 ```
 
-The subsequent blocks within each block category must have different block types, but we see that block types can be reused later in the meta-block.  The block types are numbered from 0 to the maximum block type number of 255, and the first block of each block category is type 0.  The block structure of a meta-block is represented by the sequence of block-switch commands for each block category, where a block-switch command is a pair &lt;block type, block count&gt;.  The block- switch commands are represented in the compressed data before the start of each new block using a prefix code for block types and a separate prefix code for block counts for each block category.  For the above example, the physical layout of the meta-block is then:
+每个 block 种类中后续的 block 必须具有不同的类型，但我们可以看到 block 类型可以稍后在 meta-block 中复用。 block 类型的编号从 0 到 255，同时每个 block 种类的第一个 block 是类型 0。meta-block 的 block 结构由每个 block 种类的 block 切换命令序列表示 ，其中 block 切换命令是一对 `<block 类型, block 计数>`。 对于每个 block 种类，其 block 切换命令位于压缩数据中，在每个新的 block 之前，而新的 block 则使用一个前缀码表示类型、一个单独的前缀码表示计数。 对于上面的例子，meta-block 的物理布局是：
 
 ```
       IaC0 L0 L1 LBlockSwitch(1, 3) L2 D0 IaC1 DBlockSwitch(1, 3) D1
       IaCBlockSwitch(1, 2) IaC2 L3 L4 D2 IaC3 LBlockSwitch(0, 1) L5 D3
 ```
 
-where xBlockSwitch\(t, n\) switches to block type t for a count of n elements.  In this example, note that DBlockSwitch\(1, 3\) immediately precedes the next required distance, D1.  It does not follow the last distance of the previous block, D0.  Whenever an element of a category is needed, and the block count for that category has reached zero, then a new block type and count are read from the stream just before reading that next element.
+其中 `xBlockSwitch(t, n)` 切换到 block 类型 t，并计数 n 个元素。 在本例中，请注意 `DBlockSwitch(1, 3)` 紧接在下一个所需距离 D1 之前。 它没有跟在上一个 block 的最后一个距离 D0 之后。每当需要一个种类的元素，并且该种类的 block 计数已经达到零，那么在读取下一个元素之前，将从流中读取新的 block 类型和计数。
 
 The block-switch commands for the first blocks of each category are not part of the meta-block compressed data.  Instead, the first block type is defined to be 0, and the first block count for each category is encoded in the meta-block header.  The prefix codes for the block types and counts, a total of six prefix codes over the three categories, are defined in a compact form in the meta-block header.
 
