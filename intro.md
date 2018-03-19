@@ -1,34 +1,104 @@
-1.  Introduction
+# 1. 简介
 
-1.1.  Purpose
+## 1.1 目的
 
-   The purpose of this specification is to define a lossless compressed
-   data format that:
+本规范的目的是定义一种无损压缩数据格式：
 
-      *  is independent of CPU type, operating system, file system, and
-         character set; hence, it can be used for interchange.
+* 独立于CPU类型，操作系统，文件系统和字符集；因此，它可以自由地使用和传播。
+* 仅使用有限的过程空间，即可生产或者消费任意长度的顺序输入流。所以，它可以用于数据通信或类似结构，如 Unix filter。
+* 压缩数据的压缩比可与目前最好的通用压缩方法相媲美，特别是比 gzip 程序好得多。
+* 解压速度比目前的 LZMA 快得多。
 
-      *  can be produced or consumed, even for an arbitrarily long,
-         sequentially presented input data stream, using only an a
-         priori bounded amount of intermediate storage; hence, it can be
-         used in data communications or similar structures, such as Unix
-         filters.
+本规范定义的数据格式不会尝试：
 
-      *  compresses data with a compression ratio comparable to the best
-         currently available general-purpose compression methods, in
-         particular, considerably better than the gzip program.
+* 允许随机访问压缩数据。
+* 压缩专用数据（例如，光栅图形）。
 
-      *  decompresses much faster than current LZMA implementations.
+本文档是 brotli 压缩数据格式的权威性规范。它定义了一组有效的 brotli 压缩数据流和解压算法。
 
-   The data format defined by this specification does not attempt to:
+## 1.2 目标读者
 
-      *  allow random access to compressed data.
+本规范旨在帮助软件开发者实现将数据压缩到 brotli 格式以及从 brotli 格式解压缩数据。
 
-      *  compress specialized data (e.g., raster graphics) as densely as
-         the best currently available specialized algorithms.
+该规范的文本假定读者有位运算和其他原生数据表示的编程开发背景。 熟悉霍夫曼编码技术是有益的，但不是必需的。
 
-   This document is the authoritative specification of the brotli
-   compressed data format.  It defines the set of valid brotli
-   compressed data streams and a decoder algorithm that produces the
-   uncompressed data stream from a valid brotli compressed data stream.
+本规范使用（大量）DEFLATE 格式规范 [\[RFC1951\]](https://tools.ietf.org/html/rfc1951) 中引入的符号和术语。为了表述的完整性，我们总是会引用 [\[RFC1951\]](https://tools.ietf.org/html/rfc1951) 相关部分的原文； 因此熟悉 DEFLATE 格式是有帮助，但也不是必需的。
+
+本规范中定义的压缩数据格式是 WOFF 文件格式 2.0 \[[WOFF2](https://tools.ietf.org/html/rfc7932#ref-WOFF2)\] 的组成部分；因此，本规范内容也会涉及 WOFF 2.0 压缩和解压缩的实现。
+
+## 1.3.  作用域
+
+该文档规定了一种将字节序列表示为（通常更短）的位序列的方法，以及将后者以字节形式打包的方法。
+
+## 1.4.  兼容
+
+除非下文另有说明，否则兼容的解压器必须能够接受和解压缩符合此处所有规格的任何数据集。 符合标准的压缩器也必须生产符合当前文档中所有规格的压缩数据。
+
+## 1.5.  术语定义及使用惯例
+
+字节：以 8 位作为一个存储或传输的单元（与八进制相同）。 在当前规范中，即使在存储字符的位数不为 8 位的机器上，字节也是8位。 字节中位的编号请参阅下文。
+
+字符串：任意字节的序列。  
+
+
+存储在计算机内的字节不具有 “位顺序”，因为它们总是被视为一个单元。 然而，一个在 0 到 255 之间的整数字节是明确具有有最高和最低有效位（[lsb](https://zh.wikipedia.org/wiki/%E6%9C%80%E4%BD%8E%E6%9C%89%E6%95%88%E4%BD%8D)），并且由于我们在左边写入最重要的数字，所以我们也在左边写入最高有效位（msb）的字节。 在下面的表格中，我们对一个字节的位进行编号，使得位 0 是最低有效位，即，这些位被编号：
+
+```
+  +--------+
+  |76543210|
+  +--------+
+```
+
+在一台计算机中，一个数字可能占用多个字节。 当前格式的描述中所有的多字节数字都优先存储最低有效字节（在较小的内存地址处）。 例如，十进制数 520 存储为：
+
+```
+    0        1
+    +--------+--------+
+    |00001000|00000010|
+    +--------+--------+
+    ^        ^
+    |        |
+    |        + 更高有效位 = 2 * 256
+    + 更低有效位 = 8
+```
+
+（译注：520 的二进制为 `1000001000`，按 8 位拆分即高位 `10` 低位 `00001000` ）
+
+### 1.5.1 打包成字节
+
+本文没有涉及在比特序列介质（bit-sequential medium）上传输字节比特的顺序问题，因为本文描述的最终数据格式是字节而不是比特。 但是，我们将下面的压缩块格式描述为各种比特长度的数据元素序列，而不是字节序列。 因此，我们必须指明如何将这些数据元素打包为字节以形成最终的压缩字节序列：
+
+* 数据元素按照字节内的位数递增的顺序（即从字节的最低有效位开始）打包成字节。
+* 除前缀码之外的数据元素以数据元素的最低有效位开始打包。 这些元素在这里被当做 “整数值” 并且被视为无符号的。
+* 前缀代码从代码的最高位开始打包。
+
+换句话说，如果要将压缩数据作为字节序列打印，则从第一个字节的 **\*右边\***  的开始，然后依次打印到 **\*左边\***，并将左侧每个字节的最高有效位作为顺序，我们可以从右到左解析结果，固定宽度的元素按照正确的 msb-to-lsb 顺序排列，前缀代码按照位反转的顺序排列（即，相对于代码的第一位最低有效位的位置）。
+
+举个栗子，考虑将以下数据元素打包成3个字节的序列：3 位的整数 6、4 位的整数 2、前缀码 110、前缀码 10、12 位的整数 3628。
+
+```
+      byte 2   byte 1   byte 0
+    +--------+--------+--------+
+    |11100010|11000101|10010110|
+    +--------+--------+--------+
+     ^            ^ ^   ^   ^
+     |            | |   |   |
+     |            | |   |   +------ 整数 6 -> '110'
+     |            | |   +---------- 整数 2 -> '0010'
+     |            | +-------------- 前缀码 110 -> '011'
+     |            +---------------- 前缀码 10 -> '01'
+     +----------------------------- 整数 3628 -> '11100010 1100'
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
