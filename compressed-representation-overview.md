@@ -1,8 +1,26 @@
-# 2. Compressed Representation Overview
+# 2. 压缩表述概览
 
-A compressed data set consists of a header and a series of meta- blocks.  Each meta-block decompresses to a sequence of 0 to 16,777,216 \(16 MiB\) uncompressed bytes.  The final uncompressed data is the concatenation of the uncompressed sequences from each meta- block.
+一个压缩数据集由一个头部（header）和一系列元块（meta-block）组成。 每个元块可以解压缩为 0 到16,777,216（16 MiB）的字节序列。 最终的源数据是来自每个元块的解压序列的串联。
 
-The header contains the size of the sliding window that was used during compression.  The decompressor must retain at least that amount of uncompressed data prior to the current position in the stream, in order to be able to decompress what follows.  The sliding window size is a power of two, minus 16, where the power is in the range of 10 to 24.  The possible sliding window sizes range from 1 KiB - 16 B to 16 MiB - 16 B.
+头部包含压缩过程中使用的滑动窗口（sliding window）的大小。 解压器必须保留那些未压缩的数据量至少在流中的当前位置之前，以便解压后面的内容。 滑动窗口的大小是 2 的 n 次幂减去16，其中 n 在 10 到 24 的范围内。所以滑动窗口的大小范围可能在 1 Kib 减 16B 到 16 Mib 减 16B 之间。
+
+每个元块通过 LZ77 算法（Lempel-Ziv 1977，\[[LZ77](https://tools.ietf.org/html/rfc7932#ref-LZ77)\]）和霍夫曼编码的组合来压缩。 霍夫曼编码的结果在这里被称为 “前缀码”。 每个元块的前缀码与之前和之后的无关；LZ77 算法可能会复用前一个元块中出现过的字符串的引用，这取决于之前的未压缩字节的滑动窗口大小。 此外，在 brotli 格式中，字符串引用可能会替代静态字典条目的引用。
+
+每个元块由两部分组成：元块头（描述压缩数据的表述）和被压缩的数据。 其中被压缩数据由一系列命令（command）组成。 每个命令有两个部分：（在滑动窗口中尚未检测可复用字符串的）字面的字节序列部分和指向复用字符串的指针部分，指针部分可以表述为 `<长度, 后向距离>` 的对。 命令中的字面字节序列长度可以为零。 可以复用的字符串最小长度为 2，但元块中的最后一个命令只允许有字面序列，且没有复用字符串的指针。
+
+压缩数据中的每个命令都使用三类前缀代码表示：
+
+1. 一组前缀码用于表示字面序列长度（也称为字面插入长度）和后向复制长度。 也就是说，单个码代表两种长度：一种是字面序列，一种是反向复制。
+2. 一组前缀码用于表示字面序列。
+3. 一组前缀码用于表示距离。
+
+每一个元块的前缀码描述紧凑的出现在每个元块压缩数据之前的头部中。 插入-复制长度和距离的前缀码会跟随在额外的比特中，其值累加到由代码计算的基本值上。 额外的比特的编号由代码决定。
+
+那么，一个元块命令可以看做一系列前缀码：
+
+`插入-复制长度、字面序列、字面序列、...、字面序列、距离`
+
+
 
 
 
