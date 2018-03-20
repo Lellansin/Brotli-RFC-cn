@@ -67,13 +67,13 @@ literal, literal, ..., literal, copy, copy, ..., copy
 
 每个种类的值（插入-复制长度、字面序列和距离）都可以使用 meta-block 的 header 中出现过的，同一种类的前缀码集合中的任何一个前缀码进行编码。 所使用的特定前缀码可以取决于两个因素：值出现的 block 的类型和值的上下文 \(the block type of the block the value appears in and the context of the value\)。 在字面序列的类型下，上下文是未压缩数据中的前两个字节；而在距离的类型下，上下文是来自相同命令的复制长度。 对于插入-复制长度，不使用上下文，前缀码仅依赖于 block 类型。 在字面序列和距离的情况下，上下文被映射到范围在 `0..63` 的上下文 ID 和范围在 `0..3` 的距离中。 每个 block 类型和上下文ID的前缀码索引的矩阵都被称为上下文映射，并以紧凑的形式被编码在 meta-block header 中。
 
-For example, the prefix code to use to decode L2 depends on the block type \(1\), and the literal context ID determined by the two uncompressed bytes that were decoded from L0 and L1.  Similarly, the prefix code to use to decode D0 depends on the block type \(0\) and the distance context ID determined by the copy length decoded from IaC0. The prefix code to use to decode IaC3 depends only on the block type \(1\).
+例如，block 类型（1）决定了用于解码 L2 的前缀码 ，以及由 L0 和 L1 解码的两个未压缩字节决定了字面序列上下文 ID。 类似地，block 类型（0）决定了用于解码 D0 的前缀码，从 IaC0 解码的复制长度决定了距离上下文 ID。而 用于解码 IaC3 的前缀码仅取决于block 类型（1）。
 
-In addition to the parts listed above \(prefix code for insert-and- copy lengths, literals, distances, block types, block counts, and the context map\), the meta-block header contains the number of uncompressed bytes coded in the meta-block and two additional parameters used in the representation of match distances: the number of postfix bits and the number of direct distance codes.
+除了上面列出的部分（插入-复制长度、字面序列、距离、block 类型、block 计数和上下文映射的前缀码）之外，meta-block header 还包含未压缩字节数，编码在 meta-block 中，以及用来表示匹配距离的两个附加参数：后缀比特的数量和直接距离代码（direct distance codes）的数量。
 
-A compressed meta-block may be marked in the header as the last meta- block, which terminates the compressed stream.
+一个压缩后的 meta-block 可以在 header 中被标记为最后的 meta-block，这样就可以终止压缩流。
 
-A meta-block may, instead, simply store the uncompressed data directly as bytes on byte boundaries with no coding or matching strings.  In this case, the meta-block header information only contains the number of uncompressed bytes and the indication that the meta-block is uncompressed.  An uncompressed meta-block cannot be the last meta-block.
+此外，meta-block 也可以将未压缩的数据直接以字节序列的形式存储在字节边界上，而不需要编码或匹配字符串。 在这种情况下， meta-block header 信息仅包含未压缩字节的数量以及 meta-block 未压缩的标记。 未压缩的 meta-block 不能是最后一个 meta-block。
 
-A meta-block may also be empty, which generates no uncompressed data at all.  An empty meta-block may contain metadata information as bytes starting on byte boundaries, which are not part of either the sliding window or the uncompressed data.  Thus, these metadata bytes cannot be used to create matching strings in subsequent meta-blocks and are not used as context bytes for literals.
+meta-block 也可以是空的，不产生任何未压缩的数据。 一个空的 meta-block 可能包含以字节边界开始的字节的 meta 数据信息，该内容即不是滑动窗口的一部分也不是未压缩数据的一部分。 因此，这些 meta 数据字节不能用在随后的 meta-block 中创建匹配的字符串，也不能用作字面序列的上下文字节。
 
