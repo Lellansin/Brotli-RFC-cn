@@ -225,9 +225,8 @@ Symbol   Code
 
 We can now define the format of the complex prefix code as follows:
 
-o  2 bits: HSKIP, the number of skipped code lengths, can have values of 0, 2, or 3.  The skipped lengths are taken to be zero.  \(An HSKIP of 1 indicates a Simple prefix code.\)
-
-o  Code lengths for symbols in the code length alphabet given just above, in the order: 1, 2, 3, 4, 0, 5, 17, 6, 16, 7, 8, 9, 10, 11, 12, 13, 14, 15.  If HSKIP is 2, then the code lengths for symbols 1 and 2 are zero, and the first code length is for symbol 3.  If HSKIP is 3, then the code length for symbol 3 is also zero, and the first code length is for symbol 4.
+* 2 bits: HSKIP, the number of skipped code lengths, can have values of 0, 2, or 3.  The skipped lengths are taken to be zero.  \(An HSKIP of 1 indicates a Simple prefix code.\)
+* Code lengths for symbols in the code length alphabet given just above, in the order: 1, 2, 3, 4, 0, 5, 17, 6, 16, 7, 8, 9, 10, 11, 12, 13, 14, 15.  If HSKIP is 2, then the code lengths for symbols 1 and 2 are zero, and the first code length is for symbol 3.  If HSKIP is 3, then the code length for symbol 3 is also zero, and the first code length is for symbol 4.
 
 ```
   The code lengths of code length symbols are between 0 and 5, and they are represented with 2..4 bits according to the variable- length code above.  A code length of 0 means the corresponding code length symbol is not used.
@@ -239,5 +238,7 @@ o  Code lengths for symbols in the code length alphabet given just above, in the
   If the lengths have been read for the entire code length alphabet and there was only one non-zero code length, then the prefix code has one symbol whose code has zero length.  In this case, that symbol results in no bits being emitted by the compressor and no bits consumed by the decompressor.  That single symbol is immediately returned when this code is decoded.  An example of where this occurs is if the entire code to be represented has symbols of length 8.  For example, a literal code that represents all literal values with equal probability.  In this case the single symbol is 16, which repeats the previous length.  The previous length is taken to be 8 before any code length code lengths are read.
 ```
 
-o  Sequence of code length symbols, which is at most the size of the alphabet, encoded using the code length prefix code.  Any trailing 0 or 17 must be omitted, i.e., the last encoded code length symbol must be between 1 and 16.  The sum of \(32768 &gt;&gt; code length\) over all the non-zero code lengths in the alphabet, including those encoded using repeat code\(s\) of 16, must be equal to 32768.  If the number of times to repeat the previous length or repeat a zero length would result in more lengths in total than the number of symbols in the alphabet, then the stream should be rejected as invalid.
+* Sequence of code length symbols, which is at most the size of the alphabet, encoded using the code length prefix code.  Any trailing 0 or 17 must be omitted, i.e., the last encoded code length symbol must be between 1 and 16.  The sum of \(32768 &gt;&gt; code length\) over all the non-zero code lengths in the alphabet, including those encoded using repeat code\(s\) of 16, must be equal to 32768.  If the number of times to repeat the previous length or repeat a zero length would result in more lengths in total than the number of symbols in the alphabet, then the stream should be rejected as invalid.
+
+
 
