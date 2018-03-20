@@ -3,4 +3,7 @@
 * [关于](README.md)
 * [1. 简介](intro.md)
 * [2. 压缩表述概览](/compressed-representation-overview.md)
+* [3. 压缩前缀码表示](/compressed-representation-of-prefix-codes.md)
+
+
 
