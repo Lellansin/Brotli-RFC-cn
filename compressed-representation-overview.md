@@ -44,7 +44,7 @@ literal, literal, ..., literal, copy, copy, ..., copy
 
 注：`IaC -> insert-and-copy`, `L -> Literal`, `D -> distance`
 
-这里的 meta-block 有四个命令，为了清楚起见先括号括了起来，其中的三个种类的符号中的每一个都可以使用不同的 block 类型来解释。 那么，我们将他们按其自身的序列分开，从而展示 block 类型分配到这些元素的示例。 下面每个方括号组都是一个使用相同类型的 block：
+这里的 meta-block 有四个命令，为了清楚起见先括号括了起来，其中的三个种类的符号中的每一个都可以使用不同的 block 类型来解释。 那么，我们将他们按其自身的序列分开类展示 block 类型分配到这些元素的示例。 下面每个方括号组都是一个使用相同类型的 block：
 
 ```
     [IaC0, IaC1][IaC2, IaC3]  <-- insert-and-copy: block 类型 0 and 1
@@ -54,18 +54,18 @@ literal, literal, ..., literal, copy, copy, ..., copy
     [D0][D1, D2, D3]          <-- distances: block 类型 0 and 1
 ```
 
-每个 block 种类中后续的 block 必须具有不同的类型，但我们可以看到 block 类型可以稍后在 meta-block 中复用。 block 类型的编号从 0 到 255，同时每个 block 种类的第一个 block 是类型 0。meta-block 的 block 结构由每个 block 种类的 block 切换命令序列表示 ，其中 block 切换命令是一对 `<block 类型, block 计数>`。 对于每个 block 种类，其 block 切换命令位于压缩数据中，在每个新的 block 之前，而新的 block 则使用一个前缀码表示类型、一个单独的前缀码表示计数。 对于上面的例子，meta-block 的物理布局是：
+每个 block 种类中后续的 block 必须具有不同的类型，但我们可以看到 block 类型可以稍后在 meta-block 中复用。 block 类型的编号从 0 到 255，同时每个 block 种类的第一个 block 是类型 0。meta-block 的 block 结构由每个 block 种类的 block-switch 命令序列表示 ，其中 block-swtich 命令是一对 `<block 类型, block 计数>`。 对于每个 block 种类，其 block-switch 命令位于压缩数据中，在每个新的 block 之前，这里新的 block 则使用一个前缀码表示类型、一个单独的前缀码表示计数。 对于上面的例子，meta-block 的物理布局是：
 
 ```
       IaC0 L0 L1 LBlockSwitch(1, 3) L2 D0 IaC1 DBlockSwitch(1, 3) D1
       IaCBlockSwitch(1, 2) IaC2 L3 L4 D2 IaC3 LBlockSwitch(0, 1) L5 D3
 ```
 
-其中 `xBlockSwitch(t, n)` 切换到 block 类型 t，并计数 n 个元素。 在本例中，请注意 `DBlockSwitch(1, 3)` 紧接在下一个所需距离 D1 之前。 它没有跟在上一个 block 的最后一个距离 D0 之后。每当需要一个种类的元素，并且该种类的 block 计数已经达到零，那么在读取下一个元素之前，将从流中读取新的 block 类型和计数。
+其中 `xBlockSwitch(t, n)` 切换到 block 类型 t，并计数 n 个元素。 在本例中，请注意 `DBlockSwitch(1, 3)` 紧接在下一个所需距离 D1 之前。 它没有跟在上一个 block 的最后一个距离 \(D0\) 之后。每当需要一个种类的元素，并且该种类的 block 计数已经达到零，那么在读取下一个元素之前，将从流中读取新的 block 类型和计数。
 
-The block-switch commands for the first blocks of each category are not part of the meta-block compressed data.  Instead, the first block type is defined to be 0, and the first block count for each category is encoded in the meta-block header.  The prefix codes for the block types and counts, a total of six prefix codes over the three categories, are defined in a compact form in the meta-block header.
+每个类别的第一个 block 的 block-switch 命令不是 meta-block 压缩数据的一部分。 相反，第一个 block 类型被定义为 0，并且每个种类的第一个 block 计数被编码在 meta-block 的 header 中。 block 的类型和计数，在这 3 个种类上共有 6 个前缀码，被紧凑格式的定义在 meta-block header 中。
 
-Each category of value \(insert-and-copy lengths, literals, and distances\) can be encoded with any prefix code from a collection of prefix codes belonging to the same category appearing in the meta- block header.  The particular prefix code used can depend on two factors: the block type of the block the value appears in and the context of the value.  In the case of the literals, the context is the previous two bytes in the uncompressed data; and in the case of distances, the context is the copy length from the same command.  For insert-and-copy lengths, no context is used and the prefix code depends only on the block type.  In the case of literals and distances, the context is mapped to a context ID in the range 0..63 for literals and 0..3 for distances.  The matrix of the prefix code indexes for each block type and context ID, called the context map, is encoded in a compact form in the meta-block header.
+每个种类的值（插入-复制长度、字面序列和距离）都可以使用 meta-block 的 header 中出现过的，同一种类的前缀码集合中的任何一个前缀码进行编码。 所使用的特定前缀码可以取决于两个因素：值出现的 block 的类型和值的上下文 \(the block type of the block the value appears in and the context of the value\)。 在字面序列的类型下，上下文是未压缩数据中的前两个字节；而在距离的类型下，上下文是来自相同命令的复制长度。 对于插入-复制长度，不使用上下文，前缀码仅依赖于 block 类型。 在字面序列和距离的情况下，上下文被映射到范围在 `0..63` 的上下文 ID 和范围在 `0..3` 的距离中。 每个 block 类型和上下文ID的前缀码索引的矩阵都被称为上下文映射，并以紧凑的形式被编码在 meta-block header 中。
 
 For example, the prefix code to use to decode L2 depends on the block type \(1\), and the literal context ID determined by the two uncompressed bytes that were decoded from L0 and L1.  Similarly, the prefix code to use to decode D0 depends on the block type \(0\) and the distance context ID determined by the copy length decoded from IaC0. The prefix code to use to decode IaC3 depends only on the block type \(1\).
 
