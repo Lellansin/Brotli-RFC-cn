@@ -14,7 +14,7 @@ header 包含压缩过程中使用的滑动窗口（sliding window）的大小�
 2. 一组前缀码用于表示字面序列。
 3. 一组前缀码用于表示距离。
 
-每一个 meta-block 的前缀码描述紧凑的出现在每个 meta-block 压缩数据之前的 header 中。 插入-复制长度和距离的前缀码会跟随在额外的比特中，其值累加到由代码计算的基本值上。 额外的比特的编号由代码决定。
+每一个 meta-block 的前缀码描述紧凑的出现在每个 meta-block 压缩数据之前的 header 中。 插入-复制长度和距离的前缀码会跟随在额外的 bits 中，其值累加到由代码计算的基本值上。 额外的 bits 的编号由代码决定。
 
 那么，一个 meta-block 命令可以看做一系列前缀码：
 
@@ -69,7 +69,7 @@ literal, literal, ..., literal, copy, copy, ..., copy
 
 例如，block 类型（1）决定了用于解码 L2 的前缀码 ，以及由 L0 和 L1 解码的两个未压缩字节决定了字面序列上下文 ID。 类似地，block 类型（0）决定了用于解码 D0 的前缀码，从 IaC0 解码的复制长度决定了距离上下文 ID。而 用于解码 IaC3 的前缀码仅取决于block 类型（1）。
 
-除了上面列出的部分（插入-复制长度、字面序列、距离、block 类型、block 计数和上下文映射的前缀码）之外，meta-block header 还包含未压缩字节数，编码在 meta-block 中，以及用来表示匹配距离的两个附加参数：后缀比特的数量和直接距离代码（direct distance codes）的数量。
+除了上面列出的部分（插入-复制长度、字面序列、距离、block 类型、block 计数和上下文映射的前缀码）之外，meta-block header 还包含未压缩字节数，编码在 meta-block 中，以及用来表示匹配距离的两个附加参数：后缀 bits 的数量和直接距离代码（direct distance codes）的数量。
 
 一个压缩后的 meta-block 可以在 header 中被标记为最后的 meta-block，这样就可以终止压缩流。
 
