@@ -2,9 +2,7 @@
 
 ## 3.1.  前缀编码简介
 
-Prefix coding represents symbols from an a priori known alphabet by bit sequences \(codes\), one code for each symbol, in a manner such that different symbols may be represented by bit sequences of
-
-different lengths, but a parser can always parse an encoded string unambiguously symbol-by-symbol.
+前缀码其实是已知码表里的一个标号，该码表实际上是一个 bit 序列（码）。一个码对应多个标号，使得不同的标号可以表示不同长度的 bit 序列。解析器却总是能一个个标号无误的解析出编码后的字符串。
 
 We define a prefix code in terms of a binary tree in which the two edges descending from each non-leaf node are labeled 0 and 1, and in which the leaf nodes correspond one-for-one with \(are labeled with\) the symbols of the alphabet.  The code for a symbol is the sequence of 0's and 1's on the edges leading from the root to the leaf labeled with that symbol.  For example:
 
