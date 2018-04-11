@@ -1,4 +1,4 @@
-# 7.  Context Modeling
+# 7.  上下文建模
 
 As described in Section 2, the prefix tree used to encode a literal byte or a distance code depends on the block type and the context ID. This section specifies how to compute the context ID for a particular literal and distance code and how to encode the context map that maps a &lt;block type, context ID&gt; pair to the index of a prefix code in the array of literal and distance prefix codes.
 
@@ -148,7 +148,6 @@ Context map size values encoded with the above prefix code and run
 1 bit:  IMTF bit, if set, we do an inverse move-to-front transform
         on the values in the context map to get the prefix code
         indexes.
-
 ```
 
 Note that RLEMAX may be larger than the value necessary to represent the longest sequence of zero values.  Also, the NTREES value is encoded right before the context map as described in Section 9.2.
