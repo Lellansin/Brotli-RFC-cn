@@ -1,19 +1,21 @@
-# 7.  上下文建模
+# 7.  Context 建模
 
-在第二节中已经叙述过, 用于编码字面 byte 或者距离码的前缀数取决于 block 类型以及 context ID。 本章将指定如何计算特定字面、距离码的 context ID 以及如何编码生成一个上下文 Map，该 Map 可以在字面序列和距离前缀码的数组中从 &lt;block type, context ID&gt; 结构映射到到前缀码的索引。 
+在第二节中已经叙述过, 用于编码字面 byte 或者距离码的前缀数取决于 block 类型以及 Context ID。 本章将指定如何计算特定字面、距离码的 Context ID 以及如何编码生成一个 Context Map，该 Map 可以在字面序列和距离前缀码的数组中将 &lt;block type, context ID&gt; 结构映射到到前缀码的索引。
 
-## 7.1.  Context Modes and Context ID Lookup for Literals
+## 7.1. 字面序列的 Context 模式和 Context ID 查询
 
-The context for encoding the next literal is defined by the last two bytes in the stream \(p1, p2, where p1 is the most recent byte\), regardless of whether these bytes are produced by uncompressed meta- blocks, backward references, static dictionary references, or by literal insertions.  At the start of the stream, p1 and p2 are initialized to zero.
+用于编码下一个字面序列的 Context 是由 Stream 中的最后两个 byte 决定的 \(p1, p2, 其中 p1 是最新的 byte\), 不管这些 byte 是通过未压缩的 meta-block、反向引用、静态字典引用或者字面序列插入产生的。在 Stream 的开头，p1 和 p2 被初始化为 0。
 
-There are four methods, called context modes, to compute the Context ID:
+以下四种方法，被称为 Context 模式, 用以计算 Context ID:
 
-* LSB6, where the Context ID is the value of six least significant bits of p1,
-* MSB6, where the Context ID is the value of six most significant bits of p1,
-* UTF8, where the Context ID is a complex function of p1, p2, optimized for text compression, and
-* Signed, where Context ID is a complex function of p1, p2, optimized for compressing sequences of signed integers.
+* LSB6, 其中  Context ID 是 p1 的 6 个最低有效位的值，
+* MSB6, 其中 Context ID 是 p1 的 6 个最高有效位的值，
+* UTF8, 其中 Context ID 是根据 p1, p2 进行一个复杂计算得出, 该优化用于文本压缩, 以及
+* Signed, 其中 Context ID 根据 p1, p2 进行一个复杂计算得出, 用于压缩 有符号的整数序列。
 
 The Context ID for the UTF8 and Signed context modes is computed using the following lookup tables Lut0, Lut1, and Lut2.
+
+使用以下查找表 Lut0，Lut1 和 Lut2 来计算 UTF8 和 Signed Context Mode 的 Context ID。
 
 ```
 Lut0 :=
@@ -71,7 +73,7 @@ Lut2 :=
    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7
 ```
 
-The lengths and the CRC-32 check values \(see Appendix C\) of each of these tables as a sequence of bytes are as follows:
+其中每个表的长度和  CRC-32 校验值 \(见附录 C\)  如下:
 
 ```
 Table    Length    CRC-32
@@ -83,6 +85,8 @@ Lut2     256       0x0dd7a0d6
 
 Given p1 is the last uncompressed byte and p2 is the second-to-last uncompressed byte, the context IDs can be computed as follows:
 
+给定 p1 是最后一个未压缩字节，p2 是倒数第二个未压缩字节，Context ID 可按如下方式计算：
+
 ```
 For LSB6:    Context ID = p1 & 0x3f
 For MSB6:    Context ID = p1 >> 2
@@ -90,9 +94,9 @@ For UTF8:    Context ID = Lut0[p1] | Lut1[p2]
 For Signed:  Context ID = (Lut2[p1] << 3) | Lut2[p2]
 ```
 
-From the lookup tables defined above and the operations to compute the context IDs, we can see that context IDs for literals are in the range of 0..63.
+从上面定义的查找表和计算 Context ID 的操作中，我们可以了解到文字的 Context ID在 0到63 的范围内。
 
-The context modes LSB6, MSB6, UTF8, and Signed are denoted by integers 0, 1, 2, 3.
+而各个模式 LSB6, MSB6, UTF8, 以及 Signed 由整数的 0, 1, 2, 3 表示。
 
 A context mode is defined for each literal block type and they are stored in a consecutive array of bits in the meta-block header, always two bits per block type.
 
