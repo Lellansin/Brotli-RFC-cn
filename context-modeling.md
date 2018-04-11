@@ -108,16 +108,16 @@ Context mode 是为每一个文字 block 类型定义的，并且它们存储在
 
 ## 7.3.  Context Map 编码
 
-There are two context maps, one for literals and one for distances. The size of the context map is 64 \* NBLTYPESL for literals, and 4 \* NBLTYPESD for distances.  Each value in the context map is an integer between 0 and 255, indicating the index of the prefix code to be used when encoding the next literal or distance.
+有两种 context map, 一种用于文字另一个用于距离。用于文字额 context map 的 size 是 64 \* NBLTYPESL, 而用于距离的则是 4 \* NBLTYPESD。  在 context map 中的每个值都是介于 0 到 255 之前额整数， 用于指明用于编码下一段文字或距离的前缀码的索引。
 
-The context maps are two-dimensional matrices, encoded as one- dimensional arrays:
+Map 本身是二位的矩阵，不过被编码为一维的数组：
 
 ```
 CMAPL[0..(64 * NBLTYPESL - 1)]
 CMAPD[0..(4 * NBLTYPESD - 1)]
 ```
 
-The index of the prefix code for encoding a literal or distance code with block type, BTYPE\_x, and context ID, CIDx, is:
+基于 block 类型 BTYPE\_x 和 Context ID、CIDx 的前缀代码（用于编码文字或距离码）索引为：
 
 ```
 index of literal prefix code = CMAPL[64 * BTYPE_L + CIDL]
