@@ -13,8 +13,6 @@
 * UTF8, 其中 Context ID 是根据 p1, p2 进行一个复杂计算得出, 该优化用于文本压缩, 以及
 * Signed, 其中 Context ID 根据 p1, p2 进行一个复杂计算得出, 用于压缩 有符号的整数序列。
 
-The Context ID for the UTF8 and Signed context modes is computed using the following lookup tables Lut0, Lut1, and Lut2.
-
 使用以下查找表 Lut0，Lut1 和 Lut2 来计算 UTF8 和 Signed Context Mode 的 Context ID。
 
 ```
