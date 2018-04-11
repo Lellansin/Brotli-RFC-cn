@@ -1,6 +1,6 @@
 # 7.  上下文建模
 
-As described in Section 2, the prefix tree used to encode a literal byte or a distance code depends on the block type and the context ID. This section specifies how to compute the context ID for a particular literal and distance code and how to encode the context map that maps a &lt;block type, context ID&gt; pair to the index of a prefix code in the array of literal and distance prefix codes.
+在第二节中已经叙述过, 用于编码字面 byte 或者距离码的前缀数取决于 block 类型以及 context ID。 本章将指定如何计算特定字面、距离码的 context ID 以及如何编码生成一个上下文 Map，该 Map 可以在字面序列和距离前缀码的数组中从 &lt;block type, context ID&gt; 结构映射到到前缀码的索引。 
 
 ## 7.1.  Context Modes and Context ID Lookup for Literals
 
