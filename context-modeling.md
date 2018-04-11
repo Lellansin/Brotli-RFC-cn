@@ -96,8 +96,6 @@ For Signed:  Context ID = (Lut2[p1] << 3) | Lut2[p2]
 
 而各个模式 LSB6, MSB6, UTF8, 以及 Signed 由整数的 0, 1, 2, 3 表示。
 
-A context mode is defined for each literal block type and they are stored in a consecutive array of bits in the meta-block header, always two bits per block type.
-
 Context mode 是为每一个文字 block 类型定义的，并且它们存储在 meta-block 的 header 上的连续 bit 数组中，同时在所有 block 类型中都是 2 个 bit。
 
 ## 7.2. 距离的 Context ID
