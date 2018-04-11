@@ -98,15 +98,15 @@ For Signed:  Context ID = (Lut2[p1] << 3) | Lut2[p2]
 
 而各个模式 LSB6, MSB6, UTF8, 以及 Signed 由整数的 0, 1, 2, 3 表示。
 
-
-
 A context mode is defined for each literal block type and they are stored in a consecutive array of bits in the meta-block header, always two bits per block type.
 
-## 7.2.  Context ID for Distances
+Context mode 是为每一个文字 block 类型定义的，并且它们存储在 meta-block 的 header 上的连续 bit 数组中，同时在所有 block 类型中都是 2 个 bit。
 
-The context for encoding a distance code is defined by the copy length corresponding to the distance.  The context IDs are 0, 1, 2, and 3 for copy lengths 2, 3, 4, and more than 4, respectively.
+## 7.2. 距离的 Context ID
 
-## 7.3.  Encoding of the Context Map
+用于编码距离码的 Context 由对应于该距离的复制长度定义。 对于复制长度 2, 3, 4 和大于4，Context ID分别为 0, 1, 2 和 3。
+
+## 7.3.  Context Map 编码
 
 There are two context maps, one for literals and one for distances. The size of the context map is 64 \* NBLTYPESL for literals, and 4 \* NBLTYPESD for distances.  Each value in the context map is an integer between 0 and 255, indicating the index of the prefix code to be used when encoding the next literal or distance.
 
