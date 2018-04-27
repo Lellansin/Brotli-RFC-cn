@@ -81,8 +81,6 @@ Lut1     256       0xd01a32f4
 Lut2     256       0x0dd7a0d6
 ```
 
-Given p1 is the last uncompressed byte and p2 is the second-to-last uncompressed byte, the context IDs can be computed as follows:
-
 给定 p1 是最后一个未压缩字节，p2 是倒数第二个未压缩字节，Context ID 可按如下方式计算：
 
 ```
